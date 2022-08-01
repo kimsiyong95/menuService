@@ -9,6 +9,8 @@ import com.musinsa.menu.request.MenuAddOrUpdateRequestDTO;
 import com.musinsa.menu.response.MenuResponseDTO;
 import com.musinsa.menu.response.ResponseDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,6 +27,7 @@ public class MenuService {
     private final MenuRepository menuRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "menuCache", key = "#id")
     public ResponseDTO selectMenu(String id){
         List<MenuResponseDTO> result;
         try {
@@ -42,6 +45,7 @@ public class MenuService {
 
 
     @Transactional
+    @CacheEvict(value = "menuCache", allEntries = true)
     public ResponseDTO addMenu(MenuAddOrUpdateRequestDTO requestDTO){
         Menu ptMenu = null;
         if(StringUtils.hasText(requestDTO.getParentId())){
@@ -59,6 +63,7 @@ public class MenuService {
     }
 
     @Transactional
+    @CacheEvict(value = "menuCache", allEntries = true)
     public ResponseDTO updateMenu(String id, MenuAddOrUpdateRequestDTO requestDTO){
 
         try {
@@ -78,6 +83,7 @@ public class MenuService {
     }
 
     @Transactional
+    @CacheEvict(value = "menuCache", allEntries = true)
     public ResponseDTO deleteMenu(String id){
         try {
             Optional<Menu> findMenu = menuRepository.findById(Long.valueOf(id));
@@ -96,6 +102,7 @@ public class MenuService {
     }
 
     @Transactional
+    @CacheEvict(value = "menuCache", allEntries = true)
     public ResponseDTO addBanner(BannerRequestDTO requestDTO){
         Optional<Menu> findMenu;
         try {

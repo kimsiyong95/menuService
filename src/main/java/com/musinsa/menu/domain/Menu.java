@@ -24,6 +24,7 @@ public class Menu {
 
     private String menuNm;
     private String menuUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parentId")
     private Menu parent;
