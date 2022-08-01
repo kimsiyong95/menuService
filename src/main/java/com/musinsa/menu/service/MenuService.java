@@ -4,15 +4,19 @@ import com.musinsa.menu.domain.Menu;
 import com.musinsa.menu.exception.ApiException;
 import com.musinsa.menu.exception.ExceptionEnum;
 import com.musinsa.menu.repository.MenuRepository;
+import com.musinsa.menu.request.BannerRequestDTO;
 import com.musinsa.menu.request.MenuAddOrUpdateRequestDTO;
+import com.musinsa.menu.response.MenuResponseDTO;
 import com.musinsa.menu.response.ResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,16 +24,24 @@ public class MenuService {
 
     private final MenuRepository menuRepository;
 
+    @Transactional(readOnly = true)
     public ResponseDTO selectMenu(String id){
-        List<Menu> findMenu;
+        List<MenuResponseDTO> result;
         try {
-             findMenu = menuRepository.findMenuWithChildren(Long.valueOf(id));
+            result = menuRepository
+                    .findAll(Long.valueOf(id))
+                    .stream()
+                    .map(MenuResponseDTO::of)
+                    .collect(Collectors.toList());
+
         }catch (NumberFormatException e){
             throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
         }
-        return new ResponseDTO().createResponseDTO(findMenu);
+        return new ResponseDTO().createResponseDTO(result);
     }
 
+
+    @Transactional
     public ResponseDTO addMenu(MenuAddOrUpdateRequestDTO requestDTO){
         Menu ptMenu = null;
         if(StringUtils.hasText(requestDTO.getParentId())){
@@ -46,17 +58,59 @@ public class MenuService {
         return new ResponseDTO().createResponseDTO(saveMenu.getId());
     }
 
-    public ResponseDTO updateMenu(){
-        return new ResponseDTO().createResponseDTO("");
-    }
+    @Transactional
+    public ResponseDTO updateMenu(String id, MenuAddOrUpdateRequestDTO requestDTO){
 
-    public ResponseDTO deleteMenu(Long id){
+        try {
+            Optional<Menu> findMenu = menuRepository.findById(Long.valueOf(id));
+
+            if(!findMenu.isPresent()){
+                throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+            }
+
+            findMenu.get().updateMenu(requestDTO);
+
+        }catch (NumberFormatException e){
+            throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+        }
 
         return new ResponseDTO().createResponseDTO(new HashMap<>());
     }
 
-    public ResponseDTO addBanner(){
-        return new ResponseDTO().createResponseDTO("");
+    @Transactional
+    public ResponseDTO deleteMenu(String id){
+        try {
+            Optional<Menu> findMenu = menuRepository.findById(Long.valueOf(id));
+
+            if(!findMenu.isPresent()){
+                throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+            }
+
+            menuRepository.delete(findMenu.get());
+
+        }catch (NumberFormatException e){
+            throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+        }
+
+        return new ResponseDTO().createResponseDTO(new HashMap<>());
+    }
+
+    @Transactional
+    public ResponseDTO addBanner(BannerRequestDTO requestDTO){
+        Optional<Menu> findMenu;
+        try {
+            findMenu = Optional.ofNullable(menuRepository.findByIdAndParentId(Long.valueOf(requestDTO.getMenuId()), null));
+
+            if(!findMenu.isPresent()){
+                throw new ApiException(ExceptionEnum.BANNER_NOT_ALLOW);
+            }
+
+            findMenu.get().addBanner(requestDTO);
+        }catch (NumberFormatException e){
+            throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+        }
+
+        return new ResponseDTO().createResponseDTO(findMenu.get().getId());
     }
 
 }

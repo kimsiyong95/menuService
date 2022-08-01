@@ -3,6 +3,7 @@ package com.musinsa.menu.controller;
 
 import com.musinsa.menu.exception.ApiException;
 import com.musinsa.menu.exception.ExceptionEnum;
+import com.musinsa.menu.request.BannerRequestDTO;
 import com.musinsa.menu.request.MenuAddOrUpdateRequestDTO;
 import com.musinsa.menu.service.MenuService;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class MenuRestController {
             throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body("");
+        return ResponseEntity.status(HttpStatus.OK).body(menuService.updateMenu(id, requestDTO));
     }
 
     @DeleteMapping("/menu/{id}")
@@ -61,12 +62,18 @@ public class MenuRestController {
             throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body("");
+        return ResponseEntity.status(HttpStatus.OK).body(menuService.deleteMenu(id));
     }
 
     @PostMapping("/banner")
-    public ResponseEntity addBanner(){
-        return ResponseEntity.status(HttpStatus.CREATED).body("");
+    public ResponseEntity addBanner(@Valid @RequestBody BannerRequestDTO requestDTO
+            ,BindingResult bindingResult ){
+
+        if(bindingResult.hasErrors()){
+            throw new ApiException(ExceptionEnum.USER_PARAM_ERROR);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(menuService.addBanner(requestDTO));
     }
 
 

@@ -1,8 +1,10 @@
 package com.musinsa.menu.domain;
 
 
+import com.musinsa.menu.request.BannerRequestDTO;
 import com.musinsa.menu.request.MenuAddOrUpdateRequestDTO;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -30,28 +32,10 @@ public class Menu {
     private int menuDp;
     private String bannerImage;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    @Builder.Default
+    @OneToMany(mappedBy = "parent", orphanRemoval = true)
     private List<Menu> children = new ArrayList<>();
 
     public static Menu createMenu(MenuAddOrUpdateRequestDTO requestDTO, Menu parentMenu){
-//        int ordr = 1;
-//        int depth = 1;
-//
-//        if(parentMenu != null){
-//           if(parentMenu.getChildren().size() != 0){
-//               for(Menu childMenu : parentMenu.getChildren()){
-//                   if(childMenu.getMenuOrdr() > ordr){
-//                       ordr = childMenu.getMenuOrdr();
-//                   }
-//               }
-//               ordr++;
-//           }
-//
-//           depth = parentMenu.getMenuDepth() + 1;
-//        }
-
-
         return Menu.builder()
                 .menuNm(requestDTO.getMenuNm())
                 .menuOrdr(requestDTO.getMenuOrdr())
@@ -60,4 +44,21 @@ public class Menu {
                 .parent(parentMenu)
                 .build();
     }
+
+    public void updateMenu(MenuAddOrUpdateRequestDTO requestDTO){
+        this.menuNm = requestDTO.getMenuNm();
+        this.menuDp = requestDTO.getMenuDp();
+        this.menuOrdr = requestDTO.getMenuOrdr();
+        this.menuUrl = requestDTO.getMenuUrl();
+
+        if(requestDTO.getParentId() != null){
+            this.parent.id = Long.valueOf(requestDTO.getParentId());
+            this.bannerImage = null; // 부모가 있다면 최상위 메뉴가 아니기때문에 배너 제거
+        }
+    }
+
+    public void addBanner(BannerRequestDTO requestDTO){
+        this.bannerImage = requestDTO.getBannerImage();
+    }
+
 }
